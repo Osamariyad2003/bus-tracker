@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
-import { supabase, School } from "@/lib/supabase";
+import { supabase, School, Bus } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, MapPin, Phone, Mail, Globe } from "lucide-react";
+import { AddSchoolDialog } from "@/components/dialogs/AddSchoolDialog";
+import { Search, Plus, MapPin, Phone, Mail, Globe, Bus as BusIcon } from "lucide-react";
+
+interface SchoolWithBuses extends School {
+  busCount?: number;
+}
 
 export default function Schools() {
-  const [schools, setSchools] = useState<School[]>([]);
+  const [schools, setSchools] = useState<SchoolWithBuses[]>([]);
+  const [schoolBuses, setSchoolBuses] = useState<Record<string, Bus[]>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchSchools();
@@ -26,7 +33,29 @@ export default function Schools() {
         console.error("Error fetching schools:", error.message || error);
         throw new Error(error.message || "Failed to fetch schools");
       }
+
       setSchools(data || []);
+
+      // Fetch buses for each school
+      if (data && data.length > 0) {
+        const { data: busesData, error: busesError } = await supabase
+          .from("buses")
+          .select("*")
+          .in("school_id", data.map((s) => s.id));
+
+        if (busesError) {
+          console.error("Error fetching buses:", busesError.message || busesError);
+        } else if (busesData) {
+          const busMap: Record<string, Bus[]> = {};
+          busesData.forEach((bus: Bus) => {
+            if (!busMap[bus.school_id]) {
+              busMap[bus.school_id] = [];
+            }
+            busMap[bus.school_id].push(bus);
+          });
+          setSchoolBuses(busMap);
+        }
+      }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error("Error fetching schools:", errorMsg);
@@ -50,7 +79,10 @@ export default function Schools() {
             Manage schools and their bus tracking
           </p>
         </div>
-        <Button className="flex items-center gap-2">
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          className="flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           Add School
         </Button>
@@ -80,55 +112,100 @@ export default function Schools() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSchools.map((school) => (
-            <Card
-              key={school.id}
-              className="p-6 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary"
-            >
-              <h3 className="text-xl font-bold text-foreground mb-2">
-                {school.name}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {school.city}, {school.state}
-              </p>
+          {filteredSchools.map((school) => {
+            const buses = schoolBuses[school.id] || [];
+            return (
+              <Card
+                key={school.id}
+                className="p-6 hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary flex flex-col h-full"
+              >
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {school.name}
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {school.city}, {school.state}
+                </p>
 
-              <div className="space-y-3 mb-6">
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
-                  <p className="text-sm text-muted-foreground">
-                    {school.address}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                  <p className="text-sm text-foreground">{school.phone}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-primary flex-shrink-0" />
-                  <p className="text-sm text-foreground">{school.email}</p>
-                </div>
-                {school.website && (
-                  <div className="flex items-center gap-3">
-                    <Globe className="w-4 h-4 text-primary flex-shrink-0" />
-                    <a
-                      href={school.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      {school.website}
-                    </a>
+                <div className="space-y-3 mb-6 flex-1">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                    <p className="text-sm text-muted-foreground">
+                      {school.address}
+                    </p>
                   </div>
-                )}
-              </div>
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-4 h-4 text-primary flex-shrink-0" />
+                    <p className="text-sm text-foreground">{school.phone}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-4 h-4 text-primary flex-shrink-0" />
+                    <p className="text-sm text-foreground">{school.email}</p>
+                  </div>
+                  {school.website && (
+                    <div className="flex items-center gap-3">
+                      <Globe className="w-4 h-4 text-primary flex-shrink-0" />
+                      <a
+                        href={school.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {school.website}
+                      </a>
+                    </div>
+                  )}
 
-              <Button variant="outline" className="w-full">
-                View Details
-              </Button>
-            </Card>
-          ))}
+                  {/* Buses Section */}
+                  <div className="pt-4 border-t border-border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BusIcon className="w-4 h-4 text-primary" />
+                      <p className="text-sm font-semibold text-foreground">
+                        Buses ({buses.length})
+                      </p>
+                    </div>
+
+                    {buses.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">
+                        No buses assigned
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {buses.slice(0, 3).map((bus) => (
+                          <div
+                            key={bus.id}
+                            className="text-xs bg-secondary/50 rounded p-2 text-foreground"
+                          >
+                            <p className="font-semibold">{bus.name}</p>
+                            <p className="text-muted-foreground">
+                              Bus #{bus.bus_number}
+                            </p>
+                          </div>
+                        ))}
+                        {buses.length > 3 && (
+                          <p className="text-xs text-muted-foreground italic">
+                            +{buses.length - 3} more buses
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Button variant="outline" className="w-full">
+                  View Details
+                </Button>
+              </Card>
+            );
+          })}
         </div>
       )}
+
+      {/* Add School Dialog */}
+      <AddSchoolDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSuccess={fetchSchools}
+      />
     </div>
   );
 }
