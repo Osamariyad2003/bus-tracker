@@ -22,10 +22,14 @@ export default function Routes() {
         .select("*")
         .order("name");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching routes:", error.message || error);
+        throw new Error(error.message || "Failed to fetch routes");
+      }
       setRoutes(data || []);
     } catch (error) {
-      console.error("Error fetching routes:", error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error("Error fetching routes:", errorMsg);
     } finally {
       setLoading(false);
     }

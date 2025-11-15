@@ -22,10 +22,14 @@ export default function Schools() {
         .select("*")
         .order("name");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching schools:", error.message || error);
+        throw new Error(error.message || "Failed to fetch schools");
+      }
       setSchools(data || []);
     } catch (error) {
-      console.error("Error fetching schools:", error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error("Error fetching schools:", errorMsg);
     } finally {
       setLoading(false);
     }

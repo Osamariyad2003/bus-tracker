@@ -29,10 +29,13 @@ export default function Dashboard() {
         .select("*")
         .limit(10);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching buses:", error.message || error);
+        throw new Error(error.message || "Failed to fetch buses");
+      }
 
       setBuses(data || []);
-      
+
       // Calculate stats
       const active = data?.filter((b: Bus) => b.status === "active").length || 0;
       const online = data?.filter((b: Bus) => b.has_gps).length || 0;
@@ -44,7 +47,8 @@ export default function Dashboard() {
         totalStudents: 0,
       });
     } catch (error) {
-      console.error("Error fetching buses:", error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error("Error fetching buses:", errorMsg);
     } finally {
       setLoading(false);
     }

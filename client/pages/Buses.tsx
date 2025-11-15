@@ -28,7 +28,10 @@ export default function Buses() {
         .from("buses")
         .select("*");
 
-      if (busesError) throw busesError;
+      if (busesError) {
+        console.error("Error fetching buses:", busesError.message || busesError);
+        throw new Error(busesError.message || "Failed to fetch buses");
+      }
 
       setBuses(busesData || []);
 
@@ -38,7 +41,9 @@ export default function Buses() {
         .select("*")
         .in("bus_id", (busesData || []).map((b) => b.id));
 
-      if (!locError && locationsData) {
+      if (locError) {
+        console.error("Error fetching bus locations:", locError.message || locError);
+      } else if (locationsData) {
         const locMap: Record<string, BusLocation> = {};
         locationsData.forEach((loc: BusLocation) => {
           locMap[loc.bus_id] = loc;
@@ -46,7 +51,8 @@ export default function Buses() {
         setBusLocations(locMap);
       }
     } catch (error) {
-      console.error("Error fetching buses:", error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error("Error fetching buses:", errorMsg);
     } finally {
       setLoading(false);
     }

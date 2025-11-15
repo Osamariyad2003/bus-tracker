@@ -24,7 +24,10 @@ export default function Tracking() {
         .select("*")
         .eq("has_gps", true);
 
-      if (busesError) throw busesError;
+      if (busesError) {
+        console.error("Error fetching buses for tracking:", busesError.message || busesError);
+        throw new Error(busesError.message || "Failed to fetch buses");
+      }
 
       setBuses(busesData || []);
 
@@ -34,7 +37,9 @@ export default function Tracking() {
         .select("*")
         .in("bus_id", (busesData || []).map((b) => b.id));
 
-      if (!locError && locationsData) {
+      if (locError) {
+        console.error("Error fetching tracking locations:", locError.message || locError);
+      } else if (locationsData) {
         const locMap: Record<string, BusLocation> = {};
         locationsData.forEach((loc: BusLocation) => {
           locMap[loc.bus_id] = loc;
@@ -42,7 +47,8 @@ export default function Tracking() {
         setBusLocations(locMap);
       }
     } catch (error) {
-      console.error("Error fetching tracking data:", error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error("Error fetching tracking data:", errorMsg);
     } finally {
       setLoading(false);
     }
