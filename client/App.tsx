@@ -1,7 +1,6 @@
 import "./global.css";
 
 import { Toaster } from "@/components/ui/toaster";
-import { createRoot } from "react-dom/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,28 +22,28 @@ const AdminPage = ({ children }: { children: React.ReactNode }) => (
   <AdminLayout>{children}</AdminLayout>
 );
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<AdminPage><Dashboard /></AdminPage>} />
-          <Route path="/buses" element={<AdminPage><Buses /></AdminPage>} />
-          <Route path="/buses/:busId" element={<AdminPage><BusDetail /></AdminPage>} />
-          <Route path="/tracking" element={<AdminPage><Tracking /></AdminPage>} />
-          <Route path="/schools" element={<AdminPage><Schools /></AdminPage>} />
-          <Route path="/students" element={<AdminPage><Students /></AdminPage>} />
-          <Route path="/routes" element={<AdminPage><RoutesPage /></AdminPage>} />
-          {/* Public Student Portal */}
-          <Route path="/student-portal" element={<StudentPortal />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
-
-createRoot(document.getElementById("root")!).render(<App />);
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<AdminPage><Dashboard /></AdminPage>} />
+            <Route path="/buses" element={<AdminPage><Buses /></AdminPage>} />
+            <Route path="/buses/:busId" element={<AdminPage><BusDetail /></AdminPage>} />
+            <Route path="/tracking" element={<AdminPage><Tracking /></AdminPage>} />
+            <Route path="/schools" element={<AdminPage><Schools /></AdminPage>} />
+            <Route path="/students" element={<AdminPage><Students /></AdminPage>} />
+            <Route path="/routes" element={<AdminPage><RoutesPage /></AdminPage>} />
+            {/* Public Student Portal */}
+            <Route path="/student-portal" element={<StudentPortal />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
