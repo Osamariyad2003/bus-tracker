@@ -14,6 +14,7 @@ import Tracking from "./pages/Tracking";
 import Schools from "./pages/Schools";
 import Students from "./pages/Students";
 import RoutesPage from "./pages/Routes";
+import StudentPortal from "./pages/StudentPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,8 @@ const App = () => (
           <Route path="/schools" element={<AdminPage><Schools /></AdminPage>} />
           <Route path="/students" element={<AdminPage><Students /></AdminPage>} />
           <Route path="/routes" element={<AdminPage><RoutesPage /></AdminPage>} />
+          {/* Public Student Portal */}
+          <Route path="/student-portal" element={<StudentPortal />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
