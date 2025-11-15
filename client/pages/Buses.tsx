@@ -5,11 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { BusMap } from "@/components/map/BusMap";
-import { Search, Filter, Plus, MapPin, AlertTriangle, CheckCircle } from "lucide-react";
+import {
+  Search,
+  Filter,
+  Plus,
+  MapPin,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
 
 export default function Buses() {
   const [buses, setBuses] = useState<Bus[]>([]);
-  const [busLocations, setBusLocations] = useState<Record<string, BusLocation>>({});
+  const [busLocations, setBusLocations] = useState<Record<string, BusLocation>>(
+    {},
+  );
   const [selectedBusId, setSelectedBusId] = useState<string | undefined>();
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -29,7 +38,10 @@ export default function Buses() {
         .select("*");
 
       if (busesError) {
-        console.error("Error fetching buses:", busesError.message || busesError);
+        console.error(
+          "Error fetching buses:",
+          busesError.message || busesError,
+        );
         throw new Error(busesError.message || "Failed to fetch buses");
       }
 
@@ -39,10 +51,16 @@ export default function Buses() {
       const { data: locationsData, error: locError } = await supabase
         .from("bus_locations")
         .select("*")
-        .in("bus_id", (busesData || []).map((b) => b.id));
+        .in(
+          "bus_id",
+          (busesData || []).map((b) => b.id),
+        );
 
       if (locError) {
-        console.error("Error fetching bus locations:", locError.message || locError);
+        console.error(
+          "Error fetching bus locations:",
+          locError.message || locError,
+        );
       } else if (locationsData) {
         const locMap: Record<string, BusLocation> = {};
         locationsData.forEach((loc: BusLocation) => {
@@ -82,9 +100,7 @@ export default function Buses() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-4xl font-bold text-foreground mb-2">Buses</h1>
-          <p className="text-muted-foreground">
-            Manage and monitor your fleet
-          </p>
+          <p className="text-muted-foreground">Manage and monitor your fleet</p>
         </div>
         <Button className="flex items-center gap-2">
           <Plus className="w-4 h-4" />

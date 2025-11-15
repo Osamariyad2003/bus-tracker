@@ -6,7 +6,9 @@ import { MapPin, Radio } from "lucide-react";
 
 export default function Tracking() {
   const [buses, setBuses] = useState<Bus[]>([]);
-  const [busLocations, setBusLocations] = useState<Record<string, BusLocation>>({});
+  const [busLocations, setBusLocations] = useState<Record<string, BusLocation>>(
+    {},
+  );
   const [selectedBusId, setSelectedBusId] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +27,10 @@ export default function Tracking() {
         .eq("has_gps", true);
 
       if (busesError) {
-        console.error("Error fetching buses for tracking:", busesError.message || busesError);
+        console.error(
+          "Error fetching buses for tracking:",
+          busesError.message || busesError,
+        );
         throw new Error(busesError.message || "Failed to fetch buses");
       }
 
@@ -35,10 +40,16 @@ export default function Tracking() {
       const { data: locationsData, error: locError } = await supabase
         .from("bus_locations")
         .select("*")
-        .in("bus_id", (busesData || []).map((b) => b.id));
+        .in(
+          "bus_id",
+          (busesData || []).map((b) => b.id),
+        );
 
       if (locError) {
-        console.error("Error fetching tracking locations:", locError.message || locError);
+        console.error(
+          "Error fetching tracking locations:",
+          locError.message || locError,
+        );
       } else if (locationsData) {
         const locMap: Record<string, BusLocation> = {};
         locationsData.forEach((loc: BusLocation) => {
@@ -65,7 +76,9 @@ export default function Tracking() {
     <div className="p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground mb-2">Live Tracking</h1>
+        <h1 className="text-4xl font-bold text-foreground mb-2">
+          Live Tracking
+        </h1>
         <p className="text-muted-foreground">
           Real-time GPS tracking for all buses in your fleet
         </p>
@@ -125,7 +138,9 @@ export default function Tracking() {
 
         {loading ? (
           <div className="flex items-center justify-center py-32">
-            <p className="text-muted-foreground">Loading live tracking data...</p>
+            <p className="text-muted-foreground">
+              Loading live tracking data...
+            </p>
           </div>
         ) : buses.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32">
@@ -190,7 +205,7 @@ export default function Tracking() {
                       <p className="text-xs text-muted-foreground">
                         Last update:{" "}
                         {new Date(
-                          busData.location.updated_at
+                          busData.location.updated_at,
                         ).toLocaleTimeString()}
                       </p>
                     </div>

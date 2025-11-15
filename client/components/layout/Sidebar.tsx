@@ -78,7 +78,7 @@ export function Sidebar() {
                 "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
                 isActive
                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/10"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/10",
               )}
             >
               <Icon className="w-5 h-5" />

@@ -37,7 +37,8 @@ export default function Dashboard() {
       setBuses(data || []);
 
       // Calculate stats
-      const active = data?.filter((b: Bus) => b.status === "active").length || 0;
+      const active =
+        data?.filter((b: Bus) => b.status === "active").length || 0;
       const online = data?.filter((b: Bus) => b.has_gps).length || 0;
 
       setStats({
@@ -59,7 +60,9 @@ export default function Dashboard() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's your fleet overview.</p>
+        <p className="text-muted-foreground">
+          Welcome back! Here's your fleet overview.
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -164,7 +167,9 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{bus.name}</p>
+                      <p className="font-semibold text-foreground">
+                        {bus.name}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         {bus.model} • {bus.year}
                       </p>
@@ -181,9 +186,7 @@ export default function Dashboard() {
                     </div>
                     <div
                       className={`w-3 h-3 rounded-full ${
-                        bus.has_gps
-                          ? "bg-success animate-pulse"
-                          : "bg-muted"
+                        bus.has_gps ? "bg-success animate-pulse" : "bg-muted"
                       }`}
                     />
                   </div>

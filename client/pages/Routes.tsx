@@ -36,7 +36,7 @@ export default function Routes() {
   };
 
   const filteredRoutes = routes.filter((route) =>
-    route.name.toLowerCase().includes(searchTerm.toLowerCase())
+    route.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -45,9 +45,7 @@ export default function Routes() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-4xl font-bold text-foreground mb-2">Routes</h1>
-          <p className="text-muted-foreground">
-            Manage bus routes and stops
-          </p>
+          <p className="text-muted-foreground">Manage bus routes and stops</p>
         </div>
         <Button className="flex items-center gap-2">
           <Plus className="w-4 h-4" />

@@ -1,5 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  useJsApiLoader,
+  Marker,
+  InfoWindow,
+} from "@react-google-maps/api";
 import { Bus, BusLocation } from "@/lib/supabase";
 
 interface BusWithLocation {
@@ -98,8 +103,8 @@ export function BusMap({ buses, selectedBusId, onBusSelect }: BusMapProps) {
       {infoWindowOpen && (
         <InfoWindow
           position={
-            buses.find((b) => b.bus.id === infoWindowOpen)?.location?.location ||
-            defaultCenter
+            buses.find((b) => b.bus.id === infoWindowOpen)?.location
+              ?.location || defaultCenter
           }
           onCloseClick={() => setInfoWindowOpen(null)}
         >
@@ -110,7 +115,10 @@ export function BusMap({ buses, selectedBusId, onBusSelect }: BusMapProps) {
                   {buses.find((b) => b.bus.id === infoWindowOpen)?.bus.name}
                 </p>
                 <p className="text-gray-600 text-xs">
-                  {buses.find((b) => b.bus.id === infoWindowOpen)?.bus.bus_number}
+                  {
+                    buses.find((b) => b.bus.id === infoWindowOpen)?.bus
+                      .bus_number
+                  }
                 </p>
                 <p className="text-gray-600 text-xs mt-1">
                   Speed:{" "}

@@ -4,7 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AddSchoolDialog } from "@/components/dialogs/AddSchoolDialog";
-import { Search, Plus, MapPin, Phone, Mail, Globe, Bus as BusIcon } from "lucide-react";
+import {
+  Search,
+  Plus,
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
+  Bus as BusIcon,
+} from "lucide-react";
 
 interface SchoolWithBuses extends School {
   busCount?: number;
@@ -41,10 +49,16 @@ export default function Schools() {
         const { data: busesData, error: busesError } = await supabase
           .from("buses")
           .select("*")
-          .in("school_id", data.map((s) => s.id));
+          .in(
+            "school_id",
+            data.map((s) => s.id),
+          );
 
         if (busesError) {
-          console.error("Error fetching buses:", busesError.message || busesError);
+          console.error(
+            "Error fetching buses:",
+            busesError.message || busesError,
+          );
         } else if (busesData) {
           const busMap: Record<string, Bus[]> = {};
           busesData.forEach((bus: Bus) => {
@@ -64,9 +78,10 @@ export default function Schools() {
     }
   };
 
-  const filteredSchools = schools.filter((school) =>
-    school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    school.city.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSchools = schools.filter(
+    (school) =>
+      school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      school.city.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (

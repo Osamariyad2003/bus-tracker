@@ -35,9 +35,10 @@ export default function Students() {
     }
   };
 
-  const filteredStudents = students.filter((student) =>
-    student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.student_number.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredStudents = students.filter(
+    (student) =>
+      student.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.student_number.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (

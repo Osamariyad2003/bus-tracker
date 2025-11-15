@@ -1,16 +1,31 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { supabase, Bus, BusLocation, Student, StudentBusAssignment } from "@/lib/supabase";
+import {
+  supabase,
+  Bus,
+  BusLocation,
+  Student,
+  StudentBusAssignment,
+} from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BusMap } from "@/components/map/BusMap";
-import { ArrowLeft, AlertTriangle, CheckCircle, MapPin, Users, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  AlertTriangle,
+  CheckCircle,
+  MapPin,
+  Users,
+  Zap,
+} from "lucide-react";
 
 export default function BusDetail() {
   const { busId } = useParams<{ busId: string }>();
   const [bus, setBus] = useState<Bus | null>(null);
   const [location, setLocation] = useState<BusLocation | null>(null);
-  const [students, setStudents] = useState<(Student & { assignment: StudentBusAssignment })[]>([]);
+  const [students, setStudents] = useState<
+    (Student & { assignment: StudentBusAssignment })[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,10 +66,12 @@ export default function BusDetail() {
       // Fetch students on this bus
       const { data: assignmentsData, error: assignError } = await supabase
         .from("student_bus_assignments")
-        .select(`
+        .select(
+          `
           *,
           students:student_id (*)
-        `)
+        `,
+        )
         .eq("bus_id", busId)
         .eq("is_active", true);
 
@@ -86,7 +103,9 @@ export default function BusDetail() {
     return (
       <div className="p-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Bus Not Found</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-4">
+            Bus Not Found
+          </h1>
           <Link to="/buses">
             <Button variant="outline">Back to Buses</Button>
           </Link>
@@ -132,7 +151,9 @@ export default function BusDetail() {
           <p className="text-muted-foreground text-sm font-medium mb-2">
             Students Onboard
           </p>
-          <p className="text-3xl font-bold text-foreground">{students.length}</p>
+          <p className="text-3xl font-bold text-foreground">
+            {students.length}
+          </p>
         </Card>
 
         <Card className="p-6">
@@ -165,10 +186,7 @@ export default function BusDetail() {
           <h2 className="text-2xl font-bold text-foreground mb-4">
             Live Location
           </h2>
-          <BusMap
-            buses={[{ bus, location }]}
-            selectedBusId={bus.id}
-          />
+          <BusMap buses={[{ bus, location }]} selectedBusId={bus.id} />
           <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <p className="text-muted-foreground text-sm mb-1">Speed</p>
@@ -254,9 +272,7 @@ export default function BusDetail() {
             <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
               <Users className="w-5 h-5 text-primary" />
               <div>
-                <p className="font-medium text-foreground">
-                  Wheelchair Lift
-                </p>
+                <p className="font-medium text-foreground">Wheelchair Lift</p>
                 <p className="text-sm text-muted-foreground">
                   {bus.has_wheelchair_lift ? "Available" : "Not available"}
                 </p>
@@ -274,9 +290,7 @@ export default function BusDetail() {
             <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg">
               <Zap className="w-5 h-5 text-primary" />
               <div>
-                <p className="font-medium text-foreground">
-                  Last Maintenance
-                </p>
+                <p className="font-medium text-foreground">Last Maintenance</p>
                 <p className="text-sm text-muted-foreground">
                   {new Date(bus.last_maintenance_date).toLocaleDateString()}
                 </p>

@@ -30,13 +30,62 @@ export default function App() {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<AdminPage><Dashboard /></AdminPage>} />
-            <Route path="/buses" element={<AdminPage><Buses /></AdminPage>} />
-            <Route path="/buses/:busId" element={<AdminPage><BusDetail /></AdminPage>} />
-            <Route path="/tracking" element={<AdminPage><Tracking /></AdminPage>} />
-            <Route path="/schools" element={<AdminPage><Schools /></AdminPage>} />
-            <Route path="/students" element={<AdminPage><Students /></AdminPage>} />
-            <Route path="/routes" element={<AdminPage><RoutesPage /></AdminPage>} />
+            <Route
+              path="/"
+              element={
+                <AdminPage>
+                  <Dashboard />
+                </AdminPage>
+              }
+            />
+            <Route
+              path="/buses"
+              element={
+                <AdminPage>
+                  <Buses />
+                </AdminPage>
+              }
+            />
+            <Route
+              path="/buses/:busId"
+              element={
+                <AdminPage>
+                  <BusDetail />
+                </AdminPage>
+              }
+            />
+            <Route
+              path="/tracking"
+              element={
+                <AdminPage>
+                  <Tracking />
+                </AdminPage>
+              }
+            />
+            <Route
+              path="/schools"
+              element={
+                <AdminPage>
+                  <Schools />
+                </AdminPage>
+              }
+            />
+            <Route
+              path="/students"
+              element={
+                <AdminPage>
+                  <Students />
+                </AdminPage>
+              }
+            />
+            <Route
+              path="/routes"
+              element={
+                <AdminPage>
+                  <RoutesPage />
+                </AdminPage>
+              }
+            />
             {/* Public Student Portal */}
             <Route path="/student-portal" element={<StudentPortal />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

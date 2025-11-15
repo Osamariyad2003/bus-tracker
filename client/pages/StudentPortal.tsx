@@ -17,7 +17,7 @@ export default function StudentPortal() {
   const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
   const [buses, setBuses] = useState<Bus[]>([]);
   const [busLocations, setBusLocations] = useState<Record<string, BusLocation>>(
-    {}
+    {},
   );
   const [loading, setLoading] = useState(true);
   const [selectedBusId, setSelectedBusId] = useState<string | undefined>();
@@ -68,7 +68,10 @@ export default function StudentPortal() {
         .eq("school_id", schoolId);
 
       if (busesError) {
-        console.error("Error fetching buses:", busesError.message || busesError);
+        console.error(
+          "Error fetching buses:",
+          busesError.message || busesError,
+        );
         throw new Error(busesError.message || "Failed to fetch buses");
       }
 
@@ -79,10 +82,16 @@ export default function StudentPortal() {
         const { data: locationsData, error: locError } = await supabase
           .from("bus_locations")
           .select("*")
-          .in("bus_id", busesData.map((b) => b.id));
+          .in(
+            "bus_id",
+            busesData.map((b) => b.id),
+          );
 
         if (locError) {
-          console.error("Error fetching locations:", locError.message || locError);
+          console.error(
+            "Error fetching locations:",
+            locError.message || locError,
+          );
         } else if (locationsData) {
           const locMap: Record<string, BusLocation> = {};
           locationsData.forEach((loc: BusLocation) => {
@@ -109,7 +118,9 @@ export default function StudentPortal() {
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-accent p-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold text-white mb-2">Student Bus Portal</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">
+            Student Bus Portal
+          </h1>
           <p className="text-white/90">
             Track your school bus and see real-time location updates
           </p>
@@ -272,7 +283,9 @@ export default function StudentPortal() {
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Capacity:</span>
+                          <span className="text-muted-foreground">
+                            Capacity:
+                          </span>
                           <span className="font-medium text-foreground">
                             {bus.capacity} seats
                           </span>
