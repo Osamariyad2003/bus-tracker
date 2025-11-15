@@ -13,7 +13,7 @@ import BusDetail from "./pages/BusDetail";
 import Tracking from "./pages/Tracking";
 import Schools from "./pages/Schools";
 import Students from "./pages/Students";
-import Routes from "./pages/Routes";
+import RoutesPage from "./pages/Routes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,7 +35,7 @@ const App = () => (
           <Route path="/tracking" element={<AdminPage><Tracking /></AdminPage>} />
           <Route path="/schools" element={<AdminPage><Schools /></AdminPage>} />
           <Route path="/students" element={<AdminPage><Students /></AdminPage>} />
-          <Route path="/routes" element={<AdminPage><Routes /></AdminPage>} />
+          <Route path="/routes" element={<AdminPage><RoutesPage /></AdminPage>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
