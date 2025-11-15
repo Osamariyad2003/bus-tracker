@@ -18,6 +18,10 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const AdminPage = ({ children }: { children: React.ReactNode }) => (
+  <AdminLayout>{children}</AdminLayout>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -25,15 +29,13 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route element={<AdminLayout><Routes /></AdminLayout>}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/buses" element={<Buses />} />
-            <Route path="/buses/:busId" element={<BusDetail />} />
-            <Route path="/tracking" element={<Tracking />} />
-            <Route path="/schools" element={<Schools />} />
-            <Route path="/students" element={<Students />} />
-            <Route path="/routes" element={<Routes />} />
-          </Route>
+          <Route path="/" element={<AdminPage><Dashboard /></AdminPage>} />
+          <Route path="/buses" element={<AdminPage><Buses /></AdminPage>} />
+          <Route path="/buses/:busId" element={<AdminPage><BusDetail /></AdminPage>} />
+          <Route path="/tracking" element={<AdminPage><Tracking /></AdminPage>} />
+          <Route path="/schools" element={<AdminPage><Schools /></AdminPage>} />
+          <Route path="/students" element={<AdminPage><Students /></AdminPage>} />
+          <Route path="/routes" element={<AdminPage><Routes /></AdminPage>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
