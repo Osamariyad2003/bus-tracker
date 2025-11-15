@@ -22,10 +22,14 @@ export default function Students() {
         .select("*")
         .order("full_name");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching students:", error.message || error);
+        throw new Error(error.message || "Failed to fetch students");
+      }
       setStudents(data || []);
     } catch (error) {
-      console.error("Error fetching students:", error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error("Error fetching students:", errorMsg);
     } finally {
       setLoading(false);
     }
