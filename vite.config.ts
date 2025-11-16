@@ -5,8 +5,10 @@ import { createServer } from "./server";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // Base path for GitHub Pages (update with your repo name)
-  base: mode === 'production' ? '/bus-tracker/' : '/',
+  // Base path for GitHub Pages - must match your repo name exactly
+  base: '/bus-tracker/',
+  root: '.',
+  publicDir: 'public',
   server: {
     host: "::",
     port: 8080,
@@ -21,6 +23,7 @@ export default defineConfig(({ mode }) => ({
     emptyOutDir: true,
     sourcemap: mode !== 'production',
     rollupOptions: {
+      input: path.resolve(__dirname, 'index.html'),
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
@@ -30,7 +33,7 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  plugins: [react(), expressPlugin()],
+  plugins: [react(), mode !== 'production' && expressPlugin()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./client"),
