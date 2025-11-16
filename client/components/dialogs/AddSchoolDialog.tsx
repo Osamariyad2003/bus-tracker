@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 
 interface AddSchoolDialogProps {
@@ -15,6 +16,7 @@ export function AddSchoolDialog({
   onClose,
   onSuccess,
 }: AddSchoolDialogProps) {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -42,10 +44,23 @@ export function AddSchoolDialog({
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("schools").insert([formData]);
+      const { data, error } = await supabase.from("schools").insert([formData]).select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw new Error(error.message || error.details || "Failed to add school");
+      }
 
+      console.log("School added successfully:", data);
+
+      // Show success toast
+      toast({
+        title: "Success!",
+        description: "School has been added successfully.",
+        variant: "default",
+      });
+
+      // Reset form
       setFormData({
         name: "",
         address: "",
@@ -61,10 +76,24 @@ export function AddSchoolDialog({
 
       onSuccess();
       onClose();
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error("Error adding school:", errorMsg);
-      alert(`Failed to add school: ${errorMsg}`);
+    } catch (error: any) {
+      console.error("Error adding school:", error);
+      
+      // Better error message extraction
+      let errorMsg = "Failed to add school. Please try again.";
+      
+      if (error?.message) {
+        errorMsg = error.message;
+      } else if (typeof error === 'string') {
+        errorMsg = error;
+      }
+
+      // Show error toast
+      toast({
+        title: "Error",
+        description: errorMsg,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

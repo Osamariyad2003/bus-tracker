@@ -1,18 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
+import { env } from "./env";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing Supabase environment variables");
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(
+  env.VITE_SUPABASE_URL,
+  env.VITE_SUPABASE_ANON_KEY
+);
 
 // Define types based on your database schema
 export interface Bus {
   id: string;
   school_id: string;
+  supervisor_name: string;
   name: string;
   bus_number: string;
   license_plate: string;
@@ -132,4 +130,54 @@ export interface StudentBusAssignment {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// Helper function to determine if a bus is online based on last location update
+export function isBusOnline(location: BusLocation | undefined, hasGPS: boolean): boolean {
+  if (!hasGPS || !location) {
+    return false;
+  }
+  
+  const lastUpdate = new Date(location.updated_at || location.created_at);
+  const now = new Date();
+  const minutesSinceUpdate = (now.getTime() - lastUpdate.getTime()) / 1000 / 60;
+  
+  // Consider online if updated within last 5 minutes
+  return minutesSinceUpdate <= 5;
+}
+
+// Helper function to get time since last update
+export function getTimeSinceUpdate(location: BusLocation | undefined): string {
+  if (!location) {
+    return "No data";
+  }
+  
+  const lastUpdate = new Date(location.updated_at || location.created_at);
+  const now = new Date();
+  const minutesSinceUpdate = Math.floor((now.getTime() - lastUpdate.getTime()) / 1000 / 60);
+  
+  if (minutesSinceUpdate < 1) {
+    return "Just now";
+  } else if (minutesSinceUpdate < 60) {
+    return `${minutesSinceUpdate}m ago`;
+  } else {
+    const hours = Math.floor(minutesSinceUpdate / 60);
+    return `${hours}h ago`;
+  }
+}
+
+// Get online status label
+export function getBusOnlineStatus(location: BusLocation | undefined, hasGPS: boolean): {
+  isOnline: boolean;
+  label: string;
+  timeSince: string;
+} {
+  const isOnline = isBusOnline(location, hasGPS);
+  const timeSince = getTimeSinceUpdate(location);
+  
+  return {
+    isOnline,
+    label: isOnline ? "Online" : "Offline",
+    timeSince
+  };
 }

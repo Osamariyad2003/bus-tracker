@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   supabase,
   Bus,
   BusLocation,
   Student,
   StudentBusAssignment,
+  isBusOnline,
+  getTimeSinceUpdate,
 } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BusMap } from "@/components/map/BusMap";
+import { EditBusDialog } from "@/components/dialogs/EditBusDialog";
+import { ConfirmDialog } from "@/components/dialogs/ConfirmDialog";
+import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft,
   AlertTriangle,
@@ -17,22 +22,40 @@ import {
   MapPin,
   Users,
   Zap,
+  Edit,
+  Trash2,
+  MoreVertical,
+  Download,
+  Printer,
+  Copy,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { exportToCSV, printPage } from "@/lib/export";
 
 export default function BusDetail() {
   const { busId } = useParams<{ busId: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [bus, setBus] = useState<Bus | null>(null);
   const [location, setLocation] = useState<BusLocation | null>(null);
   const [students, setStudents] = useState<
     (Student & { assignment: StudentBusAssignment })[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (busId) {
       fetchBusDetails();
-      const interval = setInterval(fetchBusDetails, 5000);
-      return () => clearInterval(interval);
+      // Load data once when bus changes - no auto-refresh
     }
   }, [busId]);
 
@@ -89,6 +112,80 @@ export default function BusDetail() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!bus) return;
+    
+    setDeleteLoading(true);
+    try {
+      const { error } = await supabase
+        .from("buses")
+        .delete()
+        .eq("id", bus.id);
+
+      if (error) {
+        throw new Error(error.message || "Failed to delete bus");
+      }
+
+      toast({
+        title: "Bus Deleted",
+        description: `${bus.name} has been deleted successfully.`,
+        variant: "default",
+      });
+
+      navigate("/buses");
+    } catch (error: any) {
+      console.error("Error deleting bus:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete bus",
+        variant: "destructive",
+      });
+      setDeleteLoading(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleDuplicate = () => {
+    if (!bus) return;
+    
+    // Navigate to buses page with query param to duplicate
+    navigate(`/buses?duplicate=${bus.id}`);
+    toast({
+      title: "Duplicate Bus",
+      description: "Add Bus dialog will open with pre-filled data",
+      variant: "default",
+    });
+  };
+
+  const handleExport = () => {
+    if (!bus) return;
+
+    const exportData = [{
+      "Bus Number": bus.bus_number,
+      "Bus Name": bus.name,
+      "Supervisor": bus.supervisor_name || "N/A",
+      "Status": bus.status,
+      "Model": bus.model,
+      "Manufacturer": bus.manufacturer,
+      "Year": bus.year,
+      "Capacity": bus.capacity,
+      "License Plate": bus.license_plate,
+      "VIN": bus.vin,
+      "Has GPS": bus.has_gps ? "Yes" : "No",
+      "Has Wheelchair Lift": bus.has_wheelchair_lift ? "Yes" : "No",
+      "Current Mileage": bus.current_mileage,
+      "Last Maintenance": bus.last_maintenance_date || "N/A",
+    }];
+
+    exportToCSV(exportData, `bus_${bus.bus_number}`);
+    
+    toast({
+      title: "Export Successful",
+      description: "Bus data has been exported to CSV",
+      variant: "default",
+    });
+  };
+
   if (loading && !bus) {
     return (
       <div className="p-8">
@@ -117,15 +214,56 @@ export default function BusDetail() {
   return (
     <div className="p-8">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Link to="/buses">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="w-5 h-5" />
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <Link to="/buses">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-4xl font-bold text-foreground">{bus.name}</h1>
+            <p className="text-muted-foreground">Bus #{bus.bus_number}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setIsEditDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Edit className="w-4 h-4" />
+            Edit
           </Button>
-        </Link>
-        <div>
-          <h1 className="text-4xl font-bold text-foreground">{bus.name}</h1>
-          <p className="text-muted-foreground">Bus #{bus.bus_number}</p>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={handleExport}>
+                <Download className="w-4 h-4 mr-2" />
+                Export to CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={printPage}>
+                <Printer className="w-4 h-4 mr-2" />
+                Print
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDuplicate}>
+                <Copy className="w-4 h-4 mr-2" />
+                Duplicate Bus
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Bus
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -170,12 +308,19 @@ export default function BusDetail() {
           <div className="flex items-center gap-2">
             <div
               className={`w-3 h-3 rounded-full ${
-                location ? "bg-success animate-pulse" : "bg-muted"
+                isBusOnline(location, bus.has_gps) ? "bg-success animate-pulse" : "bg-muted"
               }`}
             />
-            <p className="font-bold text-foreground">
-              {location ? "Online" : "Offline"}
-            </p>
+            <div>
+              <p className="font-bold text-foreground">
+                {isBusOnline(location, bus.has_gps) ? "Online" : "Offline"}
+              </p>
+              {location && (
+                <p className="text-xs text-muted-foreground">
+                  {getTimeSinceUpdate(location)}
+                </p>
+              )}
+            </div>
           </div>
         </Card>
       </div>
@@ -363,6 +508,31 @@ export default function BusDetail() {
           </div>
         )}
       </Card>
+
+      {/* Edit Bus Dialog */}
+      {bus && (
+        <EditBusDialog
+          bus={bus}
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          onSuccess={fetchBusDetails}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {bus && (
+        <ConfirmDialog
+          isOpen={isDeleteDialogOpen}
+          title="Delete Bus"
+          message={`Are you sure you want to delete "${bus.name}"? This action cannot be undone and will remove all associated data.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="destructive"
+          onConfirm={handleDelete}
+          onCancel={() => setIsDeleteDialogOpen(false)}
+          loading={deleteLoading}
+        />
+      )}
     </div>
   );
 }

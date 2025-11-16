@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
-import { supabase, Bus } from "@/lib/supabase";
-import { AlertCircle, CheckCircle2, TrendingUp, Users } from "lucide-react";
+import { supabase, Bus, BusLocation, isBusOnline } from "@/lib/supabase";
+import { AlertCircle, CheckCircle2, TrendingUp, Users, Bus as BusIcon, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { LoadingPage } from "@/components/ui/loading-spinner";
+import { ErrorMessage, EmptyState } from "@/components/ui/error-message";
 
 export default function Dashboard() {
   const [buses, setBuses] = useState<Bus[]>([]);
+  const [busLocations, setBusLocations] = useState<Record<string, BusLocation>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
     activeBuses: 0,
     totalBuses: 0,
@@ -17,13 +21,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchBuses();
-    const interval = setInterval(fetchBuses, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
+    // Load data once on mount - no auto-refresh
   }, []);
 
   const fetchBuses = async () => {
     try {
       setLoading(true);
+      setError(null);
       const { data, error } = await supabase
         .from("buses")
         .select("*")
@@ -36,33 +40,86 @@ export default function Dashboard() {
 
       setBuses(data || []);
 
-      // Calculate stats
-      const active =
-        data?.filter((b: Bus) => b.status === "active").length || 0;
-      const online = data?.filter((b: Bus) => b.has_gps).length || 0;
+      // Fetch latest locations for all buses
+      if (data && data.length > 0) {
+        const { data: locationsData, error: locError } = await supabase
+          .from("bus_locations")
+          .select("*")
+          .in(
+            "bus_id",
+            data.map((b) => b.id)
+          );
 
-      setStats({
-        activeBuses: active,
-        totalBuses: data?.length || 0,
-        onlineNow: online,
-        totalStudents: 0,
-      });
+        if (locError) {
+          console.error("Error fetching bus locations:", locError.message || locError);
+        } else if (locationsData) {
+          const locMap: Record<string, BusLocation> = {};
+          locationsData.forEach((loc: BusLocation) => {
+            locMap[loc.bus_id] = loc;
+          });
+          setBusLocations(locMap);
+
+          // Calculate stats with actual online detection
+          const active = data.filter((b: Bus) => b.status === "active").length;
+          const online = data.filter((b: Bus) => isBusOnline(locMap[b.id], b.has_gps)).length;
+
+          setStats({
+            activeBuses: active,
+            totalBuses: data.length,
+            onlineNow: online,
+            totalStudents: 0,
+          });
+        }
+      } else {
+        setStats({
+          activeBuses: 0,
+          totalBuses: 0,
+          onlineNow: 0,
+          totalStudents: 0,
+        });
+      }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error("Error fetching buses:", errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
+  if (loading) {
+    return <LoadingPage text="Loading dashboard..." />;
+  }
+
+  if (error) {
+    return (
+      <ErrorMessage
+        title="Failed to load dashboard"
+        message={error}
+        onRetry={fetchBuses}
+      />
+    );
+  }
+
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-foreground mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back! Here's your fleet overview.
-        </p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome back! Here's your fleet overview.
+          </p>
+        </div>
+        <Button 
+          variant="outline"
+          className="flex items-center gap-2"
+          onClick={() => fetchBuses()}
+          disabled={loading}
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Stats Grid */}
@@ -144,17 +201,16 @@ export default function Dashboard() {
           </Link>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-muted-foreground">Loading buses...</div>
-          </div>
-        ) : buses.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No buses found</p>
-            <Link to="/buses">
-              <Button variant="outline">Add a Bus</Button>
-            </Link>
-          </div>
+        {buses.length === 0 ? (
+          <EmptyState
+            icon={<BusIcon className="w-16 h-16" />}
+            title="No buses in your fleet"
+            description="Start by adding your first bus to begin tracking."
+            action={{
+              label: "Add a Bus",
+              onClick: () => window.location.href = "/buses",
+            }}
+          />
         ) : (
           <div className="space-y-3">
             {buses.map((bus) => (
@@ -186,7 +242,9 @@ export default function Dashboard() {
                     </div>
                     <div
                       className={`w-3 h-3 rounded-full ${
-                        bus.has_gps ? "bg-success animate-pulse" : "bg-muted"
+                        isBusOnline(busLocations[bus.id], bus.has_gps) 
+                          ? "bg-success animate-pulse" 
+                          : "bg-muted"
                       }`}
                     />
                   </div>

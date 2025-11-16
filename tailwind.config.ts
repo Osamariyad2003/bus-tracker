@@ -71,16 +71,16 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         success: {
-          DEFAULT: "#10b981",
-          foreground: "#ffffff",
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
         },
         warning: {
-          DEFAULT: "#f59e0b",
-          foreground: "#ffffff",
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
         },
         info: {
-          DEFAULT: "#3b82f6",
-          foreground: "#ffffff",
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
         },
       },
       borderRadius: {

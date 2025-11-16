@@ -1,5 +1,6 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 import {
   Bus,
   MapPin,
@@ -9,10 +10,18 @@ import {
   LogOut,
   BarChart3,
   Navigation,
+  X,
 } from "lucide-react";
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, user } = useAuth();
 
   const navigationItems = [
     {
@@ -48,21 +57,48 @@ export function Sidebar() {
   ];
 
   return (
-    <div className="w-64 bg-sidebar border-r border-sidebar-border min-h-screen flex flex-col">
-      {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-            <Bus className="w-6 h-6 text-sidebar-foreground" />
-          </div>
-          <div>
-            <h1 className="font-bold text-lg text-sidebar-foreground">
-              BusTrack
-            </h1>
-            <p className="text-xs text-sidebar-foreground/60">Admin</p>
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && onClose && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "w-64 bg-sidebar border-r border-sidebar-border min-h-screen flex flex-col transition-transform duration-300 ease-in-out",
+          "fixed lg:static z-50",
+          !isOpen && onClose && "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        {/* Logo */}
+        <div className="p-6 border-b border-sidebar-border">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
+                <Bus className="w-6 h-6 text-sidebar-foreground" />
+              </div>
+              <div>
+                <h1 className="font-bold text-lg text-sidebar-foreground">
+                  BusTrack
+                </h1>
+                <p className="text-xs text-sidebar-foreground/60">Admin</p>
+              </div>
+            </div>
+            {/* Mobile close button */}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="lg:hidden text-sidebar-foreground hover:text-sidebar-primary"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            )}
           </div>
         </div>
-      </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-6 space-y-2">
@@ -74,6 +110,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               to={item.href}
+              onClick={onClose}
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
                 isActive
@@ -90,15 +127,35 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-3 border-t border-sidebar-border space-y-2">
+        {/* User Info */}
+        {user && (
+          <div className="px-4 py-2 mb-2">
+            <p className="text-xs text-sidebar-foreground/60">Signed in as</p>
+            <p className="text-sm text-sidebar-foreground font-medium truncate">
+              {user.email}
+            </p>
+          </div>
+        )}
+
         <button className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent/10 transition-all duration-200">
           <Settings className="w-5 h-5" />
           <span className="font-medium text-sm">Settings</span>
         </button>
-        <button className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-red-500/10 transition-all duration-200">
+        <button
+          onClick={async () => {
+            await signOut();
+            navigate("/login");
+            if (onClose) onClose();
+          }}
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-red-500/10 hover:text-red-500 transition-all duration-200"
+        >
           <LogOut className="w-5 h-5" />
           <span className="font-medium text-sm">Logout</span>
         </button>
       </div>
     </div>
+    </>
   );
 }
+
+export default Sidebar;

@@ -6,6 +6,8 @@ import {
   InfoWindow,
 } from "@react-google-maps/api";
 import { Bus, BusLocation } from "@/lib/supabase";
+import { env } from "@/lib/env";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface BusWithLocation {
   bus: Bus;
@@ -36,8 +38,8 @@ const mapOptions = {
 };
 
 export function BusMap({ buses, selectedBusId, onBusSelect }: BusMapProps) {
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: env.VITE_GOOGLE_MAPS_API_KEY,
   });
 
   const mapRef = useRef<GoogleMap | null>(null);
@@ -56,10 +58,25 @@ export function BusMap({ buses, selectedBusId, onBusSelect }: BusMapProps) {
     }
   }, [selectedBusId, buses]);
 
+  if (loadError) {
+    return (
+      <div className="w-full h-96 bg-destructive/10 rounded-lg flex items-center justify-center border-2 border-destructive/20">
+        <div className="text-center p-6">
+          <p className="text-destructive font-semibold mb-2">
+            Failed to load Google Maps
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Please check your API key configuration
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoaded) {
     return (
       <div className="w-full h-96 bg-secondary rounded-lg flex items-center justify-center">
-        <p className="text-muted-foreground">Loading map...</p>
+        <LoadingSpinner text="Loading map..." />
       </div>
     );
   }

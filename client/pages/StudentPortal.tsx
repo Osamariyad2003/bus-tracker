@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase, School, Bus, BusLocation } from "@/lib/supabase";
+import { supabase, School, Bus, BusLocation, isBusOnline, getTimeSinceUpdate } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { BusMap } from "@/components/map/BusMap";
 import {
@@ -29,8 +29,7 @@ export default function StudentPortal() {
   useEffect(() => {
     if (schoolId) {
       fetchBusesForSchool(schoolId);
-      const interval = setInterval(() => fetchBusesForSchool(schoolId), 5000);
-      return () => clearInterval(interval);
+      // Load data once when school changes - no auto-refresh
     }
   }, [schoolId]);
 
@@ -111,7 +110,7 @@ export default function StudentPortal() {
     location: busLocations[bus.id],
   }));
 
-  const onlineBuses = buswithLocations.filter((b) => b.location);
+  const onlineBuses = buswithLocations.filter((b) => isBusOnline(b.location, b.bus.has_gps));
 
   return (
     <div className="min-h-screen bg-background">
@@ -238,7 +237,8 @@ export default function StudentPortal() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {buses.map((bus) => {
                   const location = busLocations[bus.id];
-                  const isOnline = location !== undefined;
+                  const isOnline = isBusOnline(location, bus.has_gps);
+                  const timeSince = getTimeSinceUpdate(location);
 
                   return (
                     <div
@@ -259,19 +259,26 @@ export default function StudentPortal() {
                             Bus #{bus.bus_number}
                           </p>
                         </div>
-                        <div
-                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                            isOnline
-                              ? "bg-success/20 text-success"
-                              : "bg-muted/20 text-muted-foreground"
-                          }`}
-                        >
-                          <span
-                            className={`w-2 h-2 rounded-full ${
-                              isOnline ? "bg-success" : "bg-muted-foreground"
-                            } ${isOnline ? "animate-pulse" : ""}`}
-                          />
-                          {isOnline ? "Online" : "Offline"}
+                        <div className="flex flex-col items-end gap-1">
+                          <div
+                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
+                              isOnline
+                                ? "bg-success/20 text-success"
+                                : "bg-muted/20 text-muted-foreground"
+                            }`}
+                          >
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                isOnline ? "bg-success" : "bg-muted-foreground"
+                              } ${isOnline ? "animate-pulse" : ""}`}
+                            />
+                            {isOnline ? "Online" : "Offline"}
+                          </div>
+                          {location && (
+                            <span className="text-xs text-muted-foreground">
+                              {timeSince}
+                            </span>
+                          )}
                         </div>
                       </div>
 

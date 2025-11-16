@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { supabase, School, Bus } from "@/lib/supabase";
+import { supabase, School, Bus, BusLocation, isBusOnline, getTimeSinceUpdate } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AddSchoolDialog } from "@/components/dialogs/AddSchoolDialog";
+import { Link } from "react-router-dom";
 import {
   Search,
   Plus,
@@ -21,6 +22,7 @@ interface SchoolWithBuses extends School {
 export default function Schools() {
   const [schools, setSchools] = useState<SchoolWithBuses[]>([]);
   const [schoolBuses, setSchoolBuses] = useState<Record<string, Bus[]>>({});
+  const [busLocations, setBusLocations] = useState<Record<string, BusLocation>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -68,6 +70,28 @@ export default function Schools() {
             busMap[bus.school_id].push(bus);
           });
           setSchoolBuses(busMap);
+
+          // Fetch latest locations for all buses
+          const { data: locationsData, error: locError } = await supabase
+            .from("bus_locations")
+            .select("*")
+            .in(
+              "bus_id",
+              busesData.map((b) => b.id)
+            );
+
+          if (locError) {
+            console.error(
+              "Error fetching bus locations:",
+              locError.message || locError
+            );
+          } else if (locationsData) {
+            const locMap: Record<string, BusLocation> = {};
+            locationsData.forEach((loc: BusLocation) => {
+              locMap[loc.bus_id] = loc;
+            });
+            setBusLocations(locMap);
+          }
         }
       }
     } catch (error) {
@@ -172,35 +196,103 @@ export default function Schools() {
 
                   {/* Buses Section */}
                   <div className="pt-4 border-t border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <BusIcon className="w-4 h-4 text-primary" />
-                      <p className="text-sm font-semibold text-foreground">
-                        Buses ({buses.length})
-                      </p>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <BusIcon className="w-4 h-4 text-primary" />
+                        <p className="text-sm font-semibold text-foreground">
+                          School Buses ({buses.length})
+                        </p>
+                      </div>
+                      {buses.length > 0 && (
+                        <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full font-medium">
+                          {buses.filter((b) => b.status === "active").length} Active
+                        </span>
+                      )}
                     </div>
 
                     {buses.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic">
-                        No buses assigned
-                      </p>
+                      <div className="text-center py-6 bg-muted/30 rounded-lg border-2 border-dashed border-border">
+                        <BusIcon className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                        <p className="text-xs text-muted-foreground font-medium">
+                          No buses assigned
+                        </p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">
+                          Add buses to this school
+                        </p>
+                      </div>
                     ) : (
-                      <div className="space-y-2">
-                        {buses.slice(0, 3).map((bus) => (
-                          <div
-                            key={bus.id}
-                            className="text-xs bg-secondary/50 rounded p-2 text-foreground"
-                          >
-                            <p className="font-semibold">{bus.name}</p>
-                            <p className="text-muted-foreground">
-                              Bus #{bus.bus_number}
-                            </p>
-                          </div>
-                        ))}
-                        {buses.length > 3 && (
-                          <p className="text-xs text-muted-foreground italic">
-                            +{buses.length - 3} more buses
-                          </p>
-                        )}
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {buses.map((bus) => {
+                              const location = busLocations[bus.id];
+                              const isOnline = isBusOnline(location, bus.has_gps);
+                              const timeSince = getTimeSinceUpdate(location);
+
+                              return (
+                                <Link
+                                  key={bus.id}
+                                  to={`/buses/${bus.id}`}
+                                  className="block"
+                                >
+                                  <div className="group flex items-center justify-between p-3 bg-secondary/30 hover:bg-secondary/60 rounded-lg border border-border hover:border-primary transition-all cursor-pointer">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary/30 transition-colors">
+                                        <BusIcon className="w-4 h-4 text-primary" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-sm text-foreground truncate">
+                                          {bus.name}
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                          <span className="text-xs text-muted-foreground">
+                                            Bus #{bus.bus_number}
+                                          </span>
+                                          {bus.supervisor_name && (
+                                            <>
+                                              <span className="text-xs text-muted-foreground">•</span>
+                                              <span className="text-xs text-muted-foreground truncate">
+                                                👤 {bus.supervisor_name}
+                                              </span>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      {bus.has_gps && (
+                                        <div className="flex flex-col items-end gap-0.5">
+                                          <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                                            isOnline
+                                              ? "bg-success/20 text-success"
+                                              : "bg-muted/20 text-muted-foreground"
+                                          }`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${
+                                              isOnline ? "bg-success animate-pulse" : "bg-muted-foreground"
+                                            }`}></span>
+                                            {isOnline ? "Online" : "Offline"}
+                                          </div>
+                                          {location && (
+                                            <span className="text-xs text-muted-foreground">
+                                              {timeSince}
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                      <div
+                                        className={`px-2 py-1 rounded text-xs font-medium ${
+                                          bus.status === "active"
+                                            ? "bg-success/10 text-success"
+                                            : bus.status === "maintenance"
+                                            ? "bg-warning/10 text-warning"
+                                            : "bg-muted text-muted-foreground"
+                                        }`}
+                                      >
+                                        {bus.status}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </Link>
+                              );
+                            })}
                       </div>
                     )}
                   </div>

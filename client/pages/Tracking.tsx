@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase, Bus, BusLocation } from "@/lib/supabase";
+import { supabase, Bus, BusLocation, isBusOnline } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { BusMap } from "@/components/map/BusMap";
 import { MapPin, Radio } from "lucide-react";
@@ -14,8 +14,7 @@ export default function Tracking() {
 
   useEffect(() => {
     fetchTracking();
-    const interval = setInterval(fetchTracking, 3000); // Update every 3 seconds for real-time
-    return () => clearInterval(interval);
+    // Load data once on mount - no auto-refresh
   }, []);
 
   const fetchTracking = async () => {
@@ -70,7 +69,7 @@ export default function Tracking() {
     location: busLocations[bus.id],
   }));
 
-  const onlineBuses = buswithLocations.filter((b) => b.location);
+  const onlineBuses = buswithLocations.filter((b) => isBusOnline(b.location, b.bus.has_gps));
 
   return (
     <div className="p-8">

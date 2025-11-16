@@ -5,16 +5,30 @@ import { createServer } from "./server";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  // Base path for GitHub Pages (update with your repo name)
+  base: mode === 'production' ? '/bus-tracker/' : '/',
   server: {
     host: "::",
     port: 8080,
     fs: {
-      allow: ["./client", "./shared"],
+      // Allow access to project root (for index.html), client, and shared directories
+      allow: [".", "./client", "./shared"],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
     },
   },
   build: {
-    outDir: "dist/spa",
+    outDir: "dist",
+    emptyOutDir: true,
+    sourcemap: mode !== 'production',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          maps: ['@react-google-maps/api'],
+          supabase: ['@supabase/supabase-js'],
+        },
+      },
+    },
   },
   plugins: [react(), expressPlugin()],
   resolve: {
